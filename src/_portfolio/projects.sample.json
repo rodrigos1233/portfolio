@@ -1,0 +1,72 @@
+[
+  {
+    "id": "realtime-collab-engine",
+    "title": "Realtime Collaboration Engine",
+    "tagline": "CRDT-based multiplayer editing infrastructure for web applications",
+    "status": "live",
+    "visibility": "private",
+    "tags": ["infrastructure", "real-time", "sdk"],
+    "stack": ["TypeScript", "Yjs", "WebSocket", "WebRTC", "PostgreSQL", "Redis"],
+    "role": "team",
+    "timeframe": { "start": "2023-06", "end": null },
+    "featured": true,
+    "origin": "professional",
+    "metrics": {
+      "users": 12000,
+      "requests_per_day": 450000,
+      "latency_ms_p95": 48,
+      "uptime": "99.97%"
+    },
+    "links": {
+      "live": "https://example.com/collab",
+      "docs": "https://docs.example.com/collab"
+    },
+    "attribution": {
+      "ownership": "Employer Corp — shared with permission",
+      "context": "Built as part of the core platform team at Employer Corp to enable multiplayer features across all product lines.",
+      "my_role": "Lead engineer — designed the CRDT sync layer, WebRTC fallback, and conflict resolution strategy.",
+      "team_size": 4,
+      "permissions": {
+        "code_public": false,
+        "screenshots_public": true,
+        "discussion_level": "architecture"
+      }
+    },
+    "markdown": "## Context / Problem\n\nBuilding multiplayer features from scratch is complex and error-prone. Every team in the company was independently implementing cursor sharing, presence, and conflict resolution — leading to inconsistent behavior and duplicated effort.\n\n## Solution\n\nBuilt a lightweight CRDT engine using Yjs as the foundation, wrapped in a framework-agnostic SDK. The engine handles:\n\n- **Awareness protocol** — cursor positions, selections, and user presence\n- **Document sync** — real-time state synchronization via WebSocket with WebRTC peer-to-peer fallback\n- **Conflict resolution** — automatic merge with deterministic ordering\n- **Persistence** — incremental snapshots to PostgreSQL with Redis pub/sub for cross-server coordination\n\n## Architecture\n\n```\nClient A ←→ WebSocket Server ←→ Client B\n    ↕              ↕              ↕\n  IndexedDB    PostgreSQL     IndexedDB\n               + Redis\n```\n\nThe sync server maintains a lightweight in-memory document state and broadcasts updates. Clients use IndexedDB for offline support and optimistic updates.\n\n## Current State\n\nDeployed in production for two commercial products, handling ~450K requests/day across 12K active users. P95 latency sits at 48ms for sync operations. The SDK is used by three internal teams."
+  },
+  {
+    "id": "spectral-analyzer",
+    "title": "Spectral Audio Analyzer",
+    "tagline": "Real-time FFT visualization and frequency analysis tool for the browser",
+    "status": "experimental",
+    "visibility": "public",
+    "tags": ["audio", "visualization", "web-api"],
+    "stack": ["TypeScript", "Web Audio API", "Canvas API", "Vite", "Rust", "WebAssembly"],
+    "role": "solo",
+    "timeframe": { "start": "2024-09" },
+    "featured": false,
+    "origin": "personal",
+    "links": {
+      "repo": "https://github.com/example/spectral-analyzer",
+      "demo": "https://spectral.example.dev"
+    },
+    "markdown": "## Context / Problem\n\nExisting browser-based audio analyzers are either too simplistic (basic waveform display) or too heavy (full DAW-like interfaces). I wanted a focused tool for quickly inspecting frequency content during audio development work.\n\n## Solution\n\nA minimal spectral analysis tool that captures microphone or system audio input and renders a real-time FFT spectrogram. The heavy DSP work runs in a Rust/WASM module for performance.\n\n### Features\n\n- **Live spectrogram** — scrolling frequency×time heatmap with configurable color maps\n- **Peak detection** — automatic identification of dominant frequencies\n- **Export** — snapshot current analysis to PNG or CSV\n- **Configurable FFT** — window size (256–8192), overlap, and windowing function selection\n\n## Architecture\n\n```\nMic/System Audio → Web Audio API → AnalyserNode\n                                        ↓\n                              Rust/WASM FFT Module\n                                        ↓\n                              Canvas 2D Renderer\n```\n\nThe Web Audio API provides raw PCM data, which gets passed to a Rust module compiled to WASM for the FFT computation. Results are rendered frame-by-frame onto a Canvas element.\n\n## Current State\n\nFunctional prototype. FFT processing works well, but the Canvas renderer could be optimized — considering migrating to WebGL for the spectrogram display. Peak detection algorithm needs tuning for noisy environments."
+  },
+  {
+    "id": "markdown-graph",
+    "title": "Markdown Knowledge Graph",
+    "tagline": "A tool that extracts and visualizes relationships between linked markdown notes",
+    "status": "archived",
+    "visibility": "public",
+    "tags": ["developer-tools", "graph", "cli"],
+    "stack": ["Python", "NetworkX", "D3.js", "Click", "FastAPI"],
+    "role": "solo",
+    "timeframe": { "start": "2023-01", "end": "2023-08" },
+    "featured": false,
+    "origin": "personal",
+    "links": {
+      "repo": "https://github.com/example/markdown-graph"
+    },
+    "markdown": "## Context / Problem\n\nI kept a large collection of interlinked markdown notes (wiki-style `[[double bracket]]` links) and wanted to understand the structure — which topics clustered together, which notes were orphaned, and what the overall knowledge topology looked like.\n\n## Solution\n\nA CLI tool and lightweight web viewer that parses a directory of markdown files, extracts `[[wikilinks]]` and standard markdown links, builds a directed graph, and serves an interactive force-directed visualization.\n\n### Features\n\n- **Link extraction** — supports `[[wikilinks]]`, `[text](url)`, and frontmatter `related:` fields\n- **Graph analysis** — PageRank, clustering coefficient, orphan detection\n- **Interactive viewer** — D3.js force-directed graph with zoom, search, and filtering\n- **CLI interface** — `mdgraph analyze ./notes`, `mdgraph serve`, `mdgraph stats`\n\n## Architecture\n\n```\nMarkdown Files → Parser (Python)\n                    ↓\n              NetworkX Graph → Analysis (PageRank, clusters)\n                    ↓\n              FastAPI Server → D3.js Frontend\n```\n\nThe parser handles multiple link formats and builds a NetworkX directed graph. Analysis runs server-side and exposes results via a REST API that the D3.js frontend consumes.\n\n## Current State\n\nArchived after I moved to Obsidian, which has built-in graph features. The core parsing and analysis code still works and could be extracted as a library. The D3.js visualization was the most polished part — smooth animations and good performance up to ~2000 nodes."
+  }
+]
