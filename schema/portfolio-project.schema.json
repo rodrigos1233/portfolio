@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Portfolio Project",
+  "description": "Schema for portfolio project YAML front matter",
+  "type": "object",
+  "required": ["id", "title", "tagline", "status", "visibility", "tags", "stack"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Kebab-case unique identifier"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tagline": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["live", "wip", "experimental", "archived"]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["private", "public"]
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "stack": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "role": {
+      "type": "string",
+      "enum": ["solo", "team", "client"]
+    },
+    "timeframe": {
+      "type": "object",
+      "properties": {
+        "start": { "type": "string", "pattern": "^\\d{4}-\\d{2}$" },
+        "end": { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}$" }
+      },
+      "required": ["start"]
+    },
+    "featured": {
+      "type": "boolean"
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "users": { "type": ["integer", "null"] },
+        "requests_per_day": { "type": ["integer", "null"] },
+        "latency_ms_p95": { "type": ["number", "null"] },
+        "uptime": { "type": ["string", "null"] },
+        "notes": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "links": {
+      "type": "object",
+      "properties": {
+        "live": { "type": ["string", "null"], "format": "uri" },
+        "repo": { "type": ["string", "null"], "format": "uri" },
+        "docs": { "type": ["string", "null"], "format": "uri" },
+        "demo": { "type": ["string", "null"], "format": "uri" },
+        "post": { "type": ["string", "null"], "format": "uri" },
+        "video": { "type": ["string", "null"], "format": "uri" }
+      },
+      "additionalProperties": false
+    },
+    "media": {
+      "type": "object",
+      "properties": {
+        "cover_image": { "type": ["string", "null"] },
+        "gallery": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "origin": {
+      "type": "string",
+      "enum": ["personal", "professional"]
+    },
+    "attribution": {
+      "type": "object",
+      "properties": {
+        "ownership": { "type": "string" },
+        "context": { "type": "string" },
+        "my_role": { "type": "string" },
+        "team_size": { "type": "integer" },
+        "permissions": {
+          "type": "object",
+          "properties": {
+            "code_public": { "type": "boolean" },
+            "screenshots_public": { "type": "boolean" },
+            "discussion_level": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "toc": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}
