@@ -86,3 +86,9 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
+
+# Vite
+dist/
+
+# Portfolio generated data (keep sample)
+src/_portfolio/projects.json
