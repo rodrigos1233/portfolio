@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json-schema.org/draft-07/schema#",
   "title": "Portfolio Project",
   "description": "Schema for portfolio project YAML front matter",
   "type": "object",
