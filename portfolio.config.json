@@ -1,5 +1,6 @@
 {
   "repos": [
-    { "owner": "YOUR_GITHUB_USERNAME", "repo": "example-project", "path": "PORTFOLIO_PRESENTATION.md" }
+    { "owner": "rodrigos1233", "repo": "image-batch", "path": "PORTFOLIO_PRESENTATION.md" },
+    { "owner": "rodrigos1233", "repo": "transposition", "path": "PORTFOLIO_PRESENTATION.md" }
   ]
 }
