@@ -55,7 +55,7 @@ export function MermaidDiagram({ chart }: { chart: string }) {
   }
 
   return (
-    <div className="relative my-6">
+    <div className="not-prose relative my-6">
       {loading && (
         <div className="flex items-center justify-center border border-neutral-200 rounded bg-neutral-50 p-12">
           <div className="flex items-center gap-3 text-sm text-neutral-500 font-mono">
