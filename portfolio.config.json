@@ -1,6 +1,6 @@
 {
   "repos": [
-    { "owner": "rodrigos1233", "repo": "image-batch", "path": "PORTFOLIO_PRESENTATION.md" },
-    { "owner": "rodrigos1233", "repo": "transposition", "path": "PORTFOLIO_PRESENTATION.md" }
+    { "owner": "rodrigos1233", "repo": "image-batch", "path": "contents/PORTFOLIO_PRESENTATION.md" },
+    { "owner": "rodrigos1233", "repo": "transposition", "path": "contents/PORTFOLIO_PRESENTATION.md" }
   ]
 }
