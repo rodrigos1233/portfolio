@@ -37,7 +37,12 @@ export function MermaidDiagram({ chart }: { chart: string }) {
       })
       .catch((err) => {
         if (cancelled) return;
-        setError(err.message ?? 'Failed to render diagram');
+        console.error('[MermaidDiagram] render failed:', err);
+        console.error('[MermaidDiagram] chart source:\n', chart.trim());
+        const detail = err?.hash?.text
+          ? `Line "${err.hash.text}" — ${err.message}`
+          : err.message ?? 'Failed to render diagram';
+        setError(detail);
         setLoading(false);
       });
 
@@ -48,9 +53,14 @@ export function MermaidDiagram({ chart }: { chart: string }) {
 
   if (error) {
     return (
-      <pre className="bg-neutral-900 text-neutral-100 border border-neutral-800 p-4 text-sm overflow-x-auto">
-        <code>{chart}</code>
-      </pre>
+      <div className="not-prose my-6">
+        <div className="bg-red-950 border border-red-800 text-red-200 px-4 py-3 text-xs font-mono mb-1 rounded-t">
+          Diagram error: {error}
+        </div>
+        <pre className="bg-neutral-900 text-neutral-100 border border-neutral-800 border-t-0 p-4 text-sm overflow-x-auto rounded-b">
+          <code>{chart}</code>
+        </pre>
+      </div>
     );
   }
 
