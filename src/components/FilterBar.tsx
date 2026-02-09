@@ -25,7 +25,7 @@ export function FilterBar({
           {selectedTags.size > 0 && (
             <button
               onClick={() => selectedTags.forEach((tag) => onToggleTag(tag))}
-              className="text-xs text-neutral-500 hover:text-neutral-900 font-mono transition-colors"
+              className="text-xs text-neutral-500 hover:text-neutral-900 font-mono transition-colors cursor-pointer"
             >
               Clear filters
             </button>
@@ -39,10 +39,10 @@ export function FilterBar({
               <button
                 key={tag}
                 onClick={() => onToggleTag(tag)}
-                className={`px-3 py-1.5 text-sm font-mono rounded border transition-all ${
+                className={`px-3 py-1.5 text-sm font-mono rounded border transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-neutral-900 text-white border-neutral-900'
-                    : 'bg-white text-neutral-600 border-neutral-300 hover:border-neutral-400'
+                    ? 'bg-neutral-900 text-white border-neutral-900 hover:bg-neutral-800'
+                    : 'bg-white text-neutral-600 border-neutral-300 hover:border-neutral-400 hover:text-neutral-900'
                 }`}
               >
                 {tag}

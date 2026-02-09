@@ -49,7 +49,7 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
           <p className="text-neutral-600 mb-4">Project not found</p>
           <button
             onClick={onBack}
-            className="text-neutral-900 hover:text-neutral-700 font-mono text-sm"
+            className="text-neutral-900 hover:text-neutral-700 font-mono text-sm cursor-pointer"
           >
             ← Return to projects
           </button>
@@ -68,7 +68,7 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
         <div className="max-w-5xl mx-auto px-6 py-6">
           <button
             onClick={onBack}
-            className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 transition-colors font-mono mb-6"
+            className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 transition-colors font-mono mb-6 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             All projects

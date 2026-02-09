@@ -39,7 +39,7 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
   return (
     <button
       onClick={() => onSelect(project.id)}
-      className="block group w-full text-left"
+      className="block group w-full text-left cursor-pointer"
     >
       <div className="border border-neutral-200 bg-white p-6 transition-all hover:border-neutral-400 hover:shadow-sm">
         <div className="flex items-start justify-between gap-4 mb-3">
