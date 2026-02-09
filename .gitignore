@@ -92,3 +92,5 @@ dist/
 
 # Portfolio generated data (keep sample)
 src/_portfolio/projects.json
+
+.idea
