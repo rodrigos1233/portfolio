@@ -25,6 +25,12 @@ if (useMock) {
 // --- Live mode: fetch from GitHub ---
 
 const token = process.env.GITHUB_TOKEN;
+if (!token || token.trim() === '') {
+  console.error('Error: GITHUB_TOKEN is set but empty — aborting live fetch.');
+  process.exit(1);
+}
+console.log(`GITHUB_TOKEN: ${token.slice(0, 4)}..${token.slice(-4)} (${token.length} chars)`);
+
 const config = JSON.parse(readFileSync(CONFIG_FILE, 'utf-8'));
 
 // Dynamic imports for ESM packages
@@ -55,7 +61,26 @@ for (const entry of config.repos) {
     });
 
     if (!res.ok) {
-      console.error(`[SKIP] ${label}: HTTP ${res.status}`);
+      let body = '';
+      try { body = await res.text(); } catch {}
+      let ghMessage = '';
+      try { ghMessage = JSON.parse(body).message; } catch {}
+
+      console.error(`[SKIP] ${label}: HTTP ${res.status}${ghMessage ? ` — ${ghMessage}` : ''}`);
+
+      if (res.status === 401) {
+        console.error(`  hint: GITHUB_TOKEN may be invalid or expired`);
+      } else if (res.status === 403) {
+        console.error(`  hint: token may lack repo access, or you are rate-limited`);
+        const remaining = res.headers.get('x-ratelimit-remaining');
+        if (remaining !== null) {
+          console.error(`  x-ratelimit-remaining: ${remaining}`);
+        }
+      } else if (res.status === 404) {
+        console.error(`  hint: repo "${owner}/${repo}" may not exist, or file "${filePath}" is missing`);
+        console.error(`  url:  ${url}`);
+      }
+
       skipped++;
       continue;
     }
@@ -77,6 +102,9 @@ for (const entry of config.repos) {
     console.log(`[OK]   ${label}`);
   } catch (err) {
     console.error(`[SKIP] ${label}: ${err.message}`);
+    if (err.cause) {
+      console.error(`  cause: ${err.cause.message || err.cause}`);
+    }
     skipped++;
   }
 }
