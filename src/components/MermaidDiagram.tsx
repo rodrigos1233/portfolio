@@ -7,7 +7,7 @@ function loadMermaid() {
     mermaidPromise = import('mermaid').then((mod) => {
       mod.default.initialize({
         startOnLoad: false,
-        theme: 'neutral',
+        theme: 'dark',
         fontFamily: 'ui-monospace, monospace',
       });
       return mod;
