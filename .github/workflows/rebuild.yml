@@ -1,0 +1,16 @@
+name: Rebuild on docs update
+
+on:
+  repository_dispatch:
+    types: [docs-updated]
+
+jobs:
+  trigger-rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git commit --allow-empty -m "rebuild: docs updated in upstream project"
+          git push
