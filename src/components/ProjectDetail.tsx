@@ -8,9 +8,11 @@ import {
   Video,
   Building2,
 } from 'lucide-react';
+import type { ComponentPropsWithoutRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import { MermaidDiagram } from '@/components/MermaidDiagram';
 import projectsData from '@/_portfolio/projects.json';
 import type { Project } from '@/types';
 
@@ -140,6 +142,17 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeHighlight]}
+                components={{
+                  code({ className, children, ...rest }: ComponentPropsWithoutRef<'code'>) {
+                    if (className === 'language-mermaid') {
+                      return <MermaidDiagram chart={String(children)} />;
+                    }
+                    return <code className={className} {...rest}>{children}</code>;
+                  },
+                  pre({ children }) {
+                    return <>{children}</>;
+                  },
+                }}
               >
                 {project.markdown}
               </ReactMarkdown>
