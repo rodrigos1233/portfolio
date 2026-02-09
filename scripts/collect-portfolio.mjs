@@ -77,7 +77,21 @@ for (const entry of config.repos) {
           console.error(`  x-ratelimit-remaining: ${remaining}`);
         }
       } else if (res.status === 404) {
-        console.error(`  hint: repo "${owner}/${repo}" may not exist, or file "${filePath}" is missing`);
+        // Disambiguate: is the repo inaccessible, or is the file missing?
+        const repoRes = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (repoRes.status === 404) {
+          console.error(`  hint: repo "${owner}/${repo}" not found — it may not exist, be private, or the token lacks access to it`);
+        } else if (repoRes.status === 401 || repoRes.status === 403) {
+          console.error(`  hint: token cannot access repo "${owner}/${repo}" (HTTP ${repoRes.status}) — check token scopes/permissions`);
+        } else if (repoRes.ok) {
+          console.error(`  hint: repo "${owner}/${repo}" exists, but file "${filePath}" was not found on the default branch`);
+          console.error(`  action: make sure "${filePath}" is committed and pushed`);
+        } else {
+          console.error(`  hint: repo check returned unexpected HTTP ${repoRes.status}`);
+        }
         console.error(`  url:  ${url}`);
       }
 
