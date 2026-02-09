@@ -4,6 +4,9 @@ on:
   repository_dispatch:
     types: [docs-updated]
 
+permissions:
+  contents: write
+
 jobs:
   trigger-rebuild:
     runs-on: ubuntu-latest
