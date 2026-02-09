@@ -67,11 +67,32 @@ How does it work? What are the key features?
 
 ## Architecture
 
-Include a diagram or code block showing the system design.
+Use a Mermaid `architecture-beta` diagram to illustrate the system design. The portfolio renders these as interactive SVG diagrams automatically.
 
+````
+```mermaid
+architecture-beta
+    group backend(cloud)[Backend]
+
+    service api(server)[API Server] in backend
+    service db(database)[PostgreSQL] in backend
+    service cache(database)[Redis] in backend
+
+    api:B --> T:db
+    api:B --> T:cache
 ```
-Component A → Component B → Component C
-```
+````
+
+**Mermaid label restrictions:** The `architecture-beta` parser does not support `/` or `.` characters inside bracket labels. Use alternative wording instead:
+
+| Avoid                  | Use instead          |
+| ---------------------- | -------------------- |
+| `D3.js Frontend`       | `D3 Frontend`        |
+| `Rust/WASM FFT`        | `WASM FFT Module`    |
+| `PageRank / Clusters`  | `PageRank Clusters`  |
+| `Node.js Server`       | `Node Server`        |
+
+Available icons: `cloud`, `database`, `disk`, `internet`, `server`. Edge directions: `T` (top), `B` (bottom), `L` (left), `R` (right).
 
 ## Current State
 
