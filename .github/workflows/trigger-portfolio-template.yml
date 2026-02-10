@@ -5,6 +5,7 @@ on:
     branches: ["main", "master"]
     paths:
       - "**/PORTFOLIO_PRESENTATION.md"
+      - "!contents/PORTFOLIO_PRESENTATION.md"
   workflow_dispatch:
 
 jobs:
