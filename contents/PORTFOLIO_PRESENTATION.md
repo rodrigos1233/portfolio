@@ -18,7 +18,7 @@ role: solo
 featured: false
 origin: personal
 links:
-  repo: https://github.com/rodrigos1233/portfolio
+  repo: https://go.rodrigosalazar.ch/portfolio-repo?origin=portfolio
 ---
 
 ## Context / Problem
