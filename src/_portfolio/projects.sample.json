@@ -108,5 +108,31 @@
       "repo": "https://github.com/example/markdown-graph"
     },
     "markdown": "## Context / Problem\n\nI kept a large collection of interlinked markdown notes (wiki-style `[[double bracket]]` links) and wanted to understand the structure — which topics clustered together, which notes were orphaned, and what the overall knowledge topology looked like.\n\n## Solution\n\nA CLI tool and lightweight web viewer that parses a directory of markdown files, extracts `[[wikilinks]]` and standard markdown links, builds a directed graph, and serves an interactive force-directed visualization.\n\n### Features\n\n- **Link extraction** — supports `[[wikilinks]]`, `[text](url)`, and frontmatter `related:` fields\n- **Graph analysis** — PageRank, clustering coefficient, orphan detection\n- **Interactive viewer** — D3.js force-directed graph with zoom, search, and filtering\n- **CLI interface** — `mdgraph analyze ./notes`, `mdgraph serve`, `mdgraph stats`\n\n## Architecture\n\n```mermaid\narchitecture-beta\n    group ingestion(cloud)[Ingestion]\n    group analysis(cloud)[Analysis]\n    group presentation(cloud)[Presentation]\n\n    service files(disk)[Markdown Files] in ingestion\n    service parser(server)[Parser] in ingestion\n    service graph(server)[NetworkX Graph] in analysis\n    service analytics(server)[PageRank Clusters] in analysis\n    service api(server)[FastAPI Server] in presentation\n    service frontend(internet)[D3 Frontend] in presentation\n\n    files:R --> L:parser\n    parser:R --> L:graph\n    graph:B --> T:analytics\n    graph:R --> L:api\n    api:R --> L:frontend\n```\n\nThe parser handles multiple link formats and builds a NetworkX directed graph. Analysis runs server-side and exposes results via a REST API that the D3.js frontend consumes.\n\n## Current State\n\nArchived after I moved to Obsidian, which has built-in graph features. The core parsing and analysis code still works and could be extracted as a library. The D3.js visualization was the most polished part — smooth animations and good performance up to ~2000 nodes."
+  },
+  {
+    "id": "portfolio",
+    "title": "Portfolio",
+    "tagline": "A data-driven portfolio site that assembles itself from distributed project repos at build time",
+    "status": "live",
+    "visibility": "public",
+    "tags": [
+      "web",
+      "developer-tools",
+      "open-source"
+    ],
+    "stack": [
+      "TypeScript",
+      "React",
+      "Vite",
+      "Tailwind CSS",
+      "Cloudflare Workers"
+    ],
+    "role": "solo",
+    "featured": false,
+    "origin": "personal",
+    "links": {
+      "repo": "https://github.com/rodrigos1233/portfolio"
+    },
+    "markdown": "## Context / Problem\n\nMost portfolio sites are monoliths — every project's description, metadata, and media lives in the portfolio repo itself. This creates a maintenance problem: project details go stale because updating them means context-switching into a separate repo, and there's no validation that the content is complete or well-structured.\n\nI wanted each project to own its own presentation, with the portfolio site acting as an aggregator that assembles everything at build time.\n\n## Solution\n\nA React site backed by a build-time data pipeline. Each project repo contains a `PORTFOLIO_PRESENTATION.md` file with YAML front matter for structured metadata and markdown for the narrative body. A prebuild script fetches these files from GitHub, validates them against a JSON Schema, and writes the collected data for Vite to bundle.\n\n### Key design decisions\n\n- **Decoupled data ownership** — projects describe themselves in their own repos, not in the portfolio repo. Updating a project's description is a commit in that project, not here.\n- **Schema-validated front matter** — AJV validates every presentation against a strict JSON Schema at build time. Missing fields, bad types, or unknown tags fail the build immediately with clear error messages.\n- **Two data modes** — live mode fetches from GitHub (requires a token), mock mode copies sample data for local development with zero setup.\n- **Lazy-loaded Mermaid diagrams** — architecture diagrams are code-split and only load when a project actually uses them. Render failures show the source code and error instead of a blank space.\n- **Automated rebuilds** — project repos trigger a portfolio rebuild via GitHub Actions repository dispatch when their presentation file changes.\n\n## Architecture\n\n```mermaid\narchitecture-beta\n    group sources(internet)[Project Repos]\n    group pipeline(cloud)[Build Pipeline]\n    group site(cloud)[Static Site]\n\n    service repo1(disk)[Repo A] in sources\n    service repo2(disk)[Repo B] in sources\n    service collector(server)[Collect Script] in pipeline\n    service validator(server)[Schema Validator] in pipeline\n    service vite(server)[Vite Build] in pipeline\n    service cdn(internet)[Cloudflare Workers] in site\n\n    repo1:R --> L:collector\n    repo2:R --> L:collector\n    collector:R --> L:validator\n    validator:R --> L:vite\n    vite:R --> L:cdn\n```\n\nThe collect script fetches each presentation via the GitHub API, parses YAML front matter with gray-matter, and validates it with AJV. Valid projects are written to a JSON file that Vite bundles into the React app. The static output deploys to Cloudflare Workers with SPA fallback routing.\n\n## Current State\n\nLive and serving the projects you see on this site. The system works well for a small number of projects. If the project count grows significantly, the build-time fetch approach may need caching or incremental builds to keep deploy times reasonable."
   }
 ]
