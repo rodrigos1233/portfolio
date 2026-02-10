@@ -25,11 +25,13 @@
     },
     "featured": true,
     "origin": "professional",
+    "toc": true,
     "metrics": {
       "users": 12000,
       "requests_per_day": 450000,
       "latency_ms_p95": 48,
-      "uptime": "99.97%"
+      "uptime": "99.97%",
+      "notes": "Measured across two production deployments"
     },
     "links": {
       "live": "https://example.com/collab",
@@ -76,6 +78,10 @@
     "links": {
       "repo": "https://github.com/example/spectral-analyzer",
       "demo": "https://spectral.example.dev"
+    },
+    "media": {
+      "cover_image": "https://example.com/spectral-cover.png",
+      "gallery": []
     },
     "markdown": "## Context / Problem\n\nExisting browser-based audio analyzers are either too simplistic (basic waveform display) or too heavy (full DAW-like interfaces). I wanted a focused tool for quickly inspecting frequency content during audio development work.\n\n## Solution\n\nA minimal spectral analysis tool that captures microphone or system audio input and renders a real-time FFT spectrogram. The heavy DSP work runs in a Rust/WASM module for performance.\n\n### Features\n\n- **Live spectrogram** — scrolling frequency×time heatmap with configurable color maps\n- **Peak detection** — automatic identification of dominant frequencies\n- **Export** — snapshot current analysis to PNG or CSV\n- **Configurable FFT** — window size (256–8192), overlap, and windowing function selection\n\n## Architecture\n\n```mermaid\narchitecture-beta\n    group input(cloud)[Audio Input]\n    group processing(cloud)[Processing]\n    group output(cloud)[Output]\n\n    service mic(internet)[Mic Input] in input\n    service webAudio(server)[Web Audio API] in input\n    service analyser(server)[AnalyserNode] in processing\n    service fft(server)[WASM FFT Module] in processing\n    service canvas(disk)[Canvas Renderer] in output\n\n    mic:R --> L:webAudio\n    webAudio:R --> L:analyser\n    analyser:B --> T:fft\n    fft:R --> L:canvas\n```\n\nThe Web Audio API provides raw PCM data, which gets passed to a Rust module compiled to WASM for the FFT computation. Results are rendered frame-by-frame onto a Canvas element.\n\n## Current State\n\nFunctional prototype. FFT processing works well, but the Canvas renderer could be optimized — considering migrating to WebGL for the spectrogram display. Peak detection algorithm needs tuning for noisy environments."
   },
@@ -133,6 +139,63 @@
     "links": {
       "repo": "https://github.com/rodrigos1233/portfolio"
     },
+    "toc": false,
     "markdown": "## Context / Problem\n\nMost portfolio sites are monoliths — every project's description, metadata, and media lives in the portfolio repo itself. This creates a maintenance problem: project details go stale because updating them means context-switching into a separate repo, and there's no validation that the content is complete or well-structured.\n\nI wanted each project to own its own presentation, with the portfolio site acting as an aggregator that assembles everything at build time.\n\n## Solution\n\nA React site backed by a build-time data pipeline. Each project repo contains a `PORTFOLIO_PRESENTATION.md` file with YAML front matter for structured metadata and markdown for the narrative body. A prebuild script fetches these files from GitHub, validates them against a JSON Schema, and writes the collected data for Vite to bundle.\n\n### Key design decisions\n\n- **Decoupled data ownership** — projects describe themselves in their own repos, not in the portfolio repo. Updating a project's description is a commit in that project, not here.\n- **Schema-validated front matter** — AJV validates every presentation against a strict JSON Schema at build time. Missing fields, bad types, or unknown tags fail the build immediately with clear error messages.\n- **Two data modes** — live mode fetches from GitHub (requires a token), mock mode copies sample data for local development with zero setup.\n- **Lazy-loaded Mermaid diagrams** — architecture diagrams are code-split and only load when a project actually uses them. Render failures show the source code and error instead of a blank space.\n- **Automated rebuilds** — project repos trigger a portfolio rebuild via GitHub Actions repository dispatch when their presentation file changes.\n\n## Architecture\n\n```mermaid\narchitecture-beta\n    group sources(internet)[Project Repos]\n    group pipeline(cloud)[Build Pipeline]\n    group site(cloud)[Static Site]\n\n    service repo1(disk)[Repo A] in sources\n    service repo2(disk)[Repo B] in sources\n    service collector(server)[Collect Script] in pipeline\n    service validator(server)[Schema Validator] in pipeline\n    service vite(server)[Vite Build] in pipeline\n    service cdn(internet)[Cloudflare Workers] in site\n\n    repo1:R --> L:collector\n    repo2:R --> L:collector\n    collector:R --> L:validator\n    validator:R --> L:vite\n    vite:R --> L:cdn\n```\n\nThe collect script fetches each presentation via the GitHub API, parses YAML front matter with gray-matter, and validates it with AJV. Valid projects are written to a JSON file that Vite bundles into the React app. The static output deploys to Cloudflare Workers with SPA fallback routing.\n\n## Current State\n\nLive and serving the projects you see on this site. The system works well for a small number of projects. If the project count grows significantly, the build-time fetch approach may need caching or incremental builds to keep deploy times reasonable."
+  },
+  {
+    "id": "logistics-dashboard",
+    "title": "Logistics Dashboard",
+    "tagline": "Real-time fleet tracking and route optimization dashboard for a logistics company",
+    "status": "wip",
+    "visibility": "private",
+    "tags": [
+      "web",
+      "visualization",
+      "data"
+    ],
+    "stack": [
+      "TypeScript",
+      "Next.js",
+      "Mapbox GL",
+      "PostgreSQL",
+      "tRPC"
+    ],
+    "role": "client",
+    "timeframe": {
+      "start": "2025-03",
+      "end": null
+    },
+    "featured": false,
+    "origin": "professional",
+    "links": {
+      "post": "https://example.com/blog/logistics-dashboard",
+      "video": "https://example.com/videos/dashboard-demo"
+    },
+    "media": {
+      "cover_image": "https://example.com/logistics-cover.png",
+      "gallery": [
+        "https://example.com/logistics-map.png",
+        "https://example.com/logistics-routes.png"
+      ]
+    },
+    "metrics": {
+      "users": 85,
+      "requests_per_day": null,
+      "latency_ms_p95": null,
+      "uptime": null,
+      "notes": "Internal tool — 85 dispatchers across 3 regional offices"
+    },
+    "attribution": {
+      "ownership": "Client Co — shared with permission for portfolio use",
+      "context": "Contracted to design and build a fleet management dashboard replacing a legacy spreadsheet-based workflow.",
+      "my_role": "Sole developer — full-stack implementation from database schema to UI.",
+      "team_size": 1,
+      "permissions": {
+        "code_public": false,
+        "screenshots_public": false,
+        "discussion_level": "general"
+      }
+    },
+    "markdown": "## Context / Problem\n\nA mid-size logistics company managed fleet dispatch through spreadsheets and phone calls. Dispatchers had no visibility into real-time vehicle positions, and route planning was done manually using paper maps and experience.\n\n## Solution\n\nA web-based dashboard that ingests GPS telemetry from fleet vehicles and displays them on an interactive map. Key features:\n\n- **Live map** — real-time vehicle positions with status indicators (en route, idle, delayed)\n- **Route optimization** — suggests optimal delivery sequences based on time windows and vehicle capacity\n- **Alerts** — automated notifications for delays, geofence violations, and maintenance schedules\n- **Reporting** — daily and weekly summaries of fleet utilization and delivery performance\n\n## Current State\n\nIn active development. The live map and basic route display are functional. Route optimization and alerting are next."
   }
 ]

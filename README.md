@@ -50,7 +50,7 @@ The prebuild step fetches presentations from the repos in `portfolio.config.json
 
 ### Automated rebuilds
 
-Each project repo can include `.github/workflows/trigger-portfolio-template.yml` to trigger a Cloudflare Pages deploy hook when `PORTFOLIO_PRESENTATION.md` is updated. Set `PORTFOLIO_DEPLOY_HOOK_URL` as a repository secret.
+Each project repo can include `.github/workflows/trigger-portfolio-template.yml` to trigger a portfolio rebuild via GitHub repository dispatch when `PORTFOLIO_PRESENTATION.md` is updated. Set `PORTFOLIO_DISPATCH_TOKEN` as a repository secret (a GitHub PAT with `repo` scope on the portfolio repo).
 
 ## Project structure
 
@@ -72,6 +72,10 @@ src/
     ProjectDetail.tsx       # Full project view with markdown rendering
     FilterBar.tsx           # Tag filter controls
     MermaidDiagram.tsx      # Lazy-loaded Mermaid diagram renderer
+    ui/                     # Shared UI primitives
+  __tests__/                # Schema and component tests
+  test/
+    setup.ts                # Test setup (jest-dom matchers)
   App.tsx                   # History API-based navigation
 portfolio.config.json       # List of repos to fetch from
 wrangler.jsonc              # Cloudflare Workers deployment config
@@ -86,6 +90,8 @@ wrangler.jsonc              # Cloudflare Workers deployment config
 | `npm run collect` | Fetch live data only (requires `GITHUB_TOKEN`) |
 | `npm run collect:mock` | Copy sample data to projects.json |
 | `npm run preview` | Preview the production build locally |
+| `npm test` | Run tests once |
+| `npm run test:watch` | Run tests in watch mode |
 
 ## Deployment
 
@@ -97,4 +103,5 @@ The site deploys to Cloudflare Workers as static assets. `wrangler.jsonc` config
 - Tailwind CSS v4 with `@tailwindcss/typography`
 - Mermaid for architecture diagrams
 - react-markdown with remark-gfm and rehype-highlight
+- Vitest with Testing Library for tests
 - Cloudflare Workers for hosting
