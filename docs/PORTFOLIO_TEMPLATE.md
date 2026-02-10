@@ -25,6 +25,7 @@ timeframe:
   start: "2024-01"
   end: null           # null or "YYYY-MM"
 origin: personal      # personal | professional
+toc: false            # Show table of contents in detail view
 
 links:
   live: https://example.com
@@ -101,15 +102,48 @@ What's the current status? What's next?
 
 ## Required Fields
 
-| Field        | Type       | Description                          |
+| Field        | Type       | Constraints                          |
 | ------------ | ---------- | ------------------------------------ |
-| `id`         | string     | Kebab-case unique identifier         |
-| `title`      | string     | Display name                         |
-| `tagline`    | string     | One-line summary                     |
+| `id`         | string     | Kebab-case (`a-z`, `0-9`, hyphens). Must match `^[a-z0-9]+(-[a-z0-9]+)*$` |
+| `title`      | string     | Non-empty                            |
+| `tagline`    | string     | Non-empty                            |
 | `status`     | enum       | `live`, `wip`, `experimental`, `archived` |
 | `visibility` | enum       | `public`, `private`                  |
-| `tags`       | string[]   | From controlled vocabulary           |
-| `stack`      | string[]   | Technologies used                    |
+| `tags`       | string[]   | At least one. See [`docs/tags.md`](tags.md) for the controlled vocabulary |
+| `stack`      | string[]   | At least one                         |
+
+## Optional Fields
+
+| Field | Type | Constraints |
+| --- | --- | --- |
+| `role` | enum | `solo`, `team`, `client` |
+| `featured` | boolean | Surfaces the project at the top of the list |
+| `origin` | enum | `personal`, `professional` |
+| `toc` | boolean | Show table of contents in the detail view |
+| `timeframe.start` | string | `YYYY-MM` format (e.g. `"2024-01"`) |
+| `timeframe.end` | string \| null | `YYYY-MM` format or `null` for ongoing |
+| `links.live` | string \| null | URI — primary live URL |
+| `links.repo` | string \| null | URI — source code |
+| `links.docs` | string \| null | URI — documentation |
+| `links.demo` | string \| null | URI — interactive demo |
+| `links.post` | string \| null | URI — blog post or writeup |
+| `links.video` | string \| null | URI — video walkthrough |
+| `metrics.users` | integer \| null | Active or total user count |
+| `metrics.requests_per_day` | integer \| null | Daily request volume |
+| `metrics.latency_ms_p95` | number \| null | 95th percentile latency in ms |
+| `metrics.uptime` | string \| null | Uptime percentage (e.g. `"99.97%"`) |
+| `metrics.notes` | string \| null | Additional context for metrics |
+| `media.cover_image` | string \| null | URL to a cover image |
+| `media.gallery` | string[] | URLs to additional screenshots |
+| `attribution.ownership` | string | Who owns the work and usage permission |
+| `attribution.context` | string | Work environment context |
+| `attribution.my_role` | string | Your specific contribution |
+| `attribution.team_size` | integer | Number of people on the team |
+| `attribution.permissions.code_public` | boolean | Whether source code can be shared |
+| `attribution.permissions.screenshots_public` | boolean | Whether screenshots can be shown |
+| `attribution.permissions.discussion_level` | string | Depth of discussion allowed (e.g. `"architecture"`, `"general"`) |
+
+No additional properties are allowed — the build will reject any field not listed above.
 
 ## Validation
 
@@ -117,4 +151,4 @@ Front matter is validated against `schema/portfolio-project.schema.json` at buil
 
 ## Triggering Updates
 
-When you push changes to `PORTFOLIO_PRESENTATION.md` on the `main` branch, a GitHub Action can trigger a Cloudflare Pages deploy hook to rebuild the portfolio. See `.github/workflows/trigger-portfolio-template.yml` for the reference workflow.
+When you push changes to `PORTFOLIO_PRESENTATION.md` on `main` or `master`, a GitHub Action can trigger a portfolio rebuild via repository dispatch. See `.github/workflows/trigger-portfolio-template.yml` for the reference workflow.
