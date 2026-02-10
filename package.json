@@ -9,7 +9,9 @@
     "prebuild": "node scripts/collect-portfolio.mjs",
     "dev": "node scripts/collect-portfolio.mjs --mock && vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.1",
