@@ -80,7 +80,7 @@
       "demo": "https://spectral.example.dev"
     },
     "media": {
-      "cover_image": "https://example.com/spectral-cover.png",
+      "cover_image": "https://images.unsplash.com/photo-1689176796800-ab67fbf93329?w=1200&auto=format&fit=crop&q=80",
       "gallery": []
     },
     "markdown": "## Context / Problem\n\nExisting browser-based audio analyzers are either too simplistic (basic waveform display) or too heavy (full DAW-like interfaces). I wanted a focused tool for quickly inspecting frequency content during audio development work.\n\n## Solution\n\nA minimal spectral analysis tool that captures microphone or system audio input and renders a real-time FFT spectrogram. The heavy DSP work runs in a Rust/WASM module for performance.\n\n### Features\n\n- **Live spectrogram** — scrolling frequency×time heatmap with configurable color maps\n- **Peak detection** — automatic identification of dominant frequencies\n- **Export** — snapshot current analysis to PNG or CSV\n- **Configurable FFT** — window size (256–8192), overlap, and windowing function selection\n\n## Architecture\n\n```mermaid\narchitecture-beta\n    group input(cloud)[Audio Input]\n    group processing(cloud)[Processing]\n    group output(cloud)[Output]\n\n    service mic(internet)[Mic Input] in input\n    service webAudio(server)[Web Audio API] in input\n    service analyser(server)[AnalyserNode] in processing\n    service fft(server)[WASM FFT Module] in processing\n    service canvas(disk)[Canvas Renderer] in output\n\n    mic:R --> L:webAudio\n    webAudio:R --> L:analyser\n    analyser:B --> T:fft\n    fft:R --> L:canvas\n```\n\nThe Web Audio API provides raw PCM data, which gets passed to a Rust module compiled to WASM for the FFT computation. Results are rendered frame-by-frame onto a Canvas element.\n\n## Current State\n\nFunctional prototype. FFT processing works well, but the Canvas renderer could be optimized — considering migrating to WebGL for the spectrogram display. Peak detection algorithm needs tuning for noisy environments."
@@ -172,10 +172,10 @@
       "video": "https://example.com/videos/dashboard-demo"
     },
     "media": {
-      "cover_image": "https://example.com/logistics-cover.png",
+      "cover_image": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&auto=format&fit=crop&q=80",
       "gallery": [
-        "https://example.com/logistics-map.png",
-        "https://example.com/logistics-routes.png"
+        "https://images.unsplash.com/photo-1759272840712-c7e5ea852367?w=1200&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1492168732976-2676c584c675?w=1200&auto=format&fit=crop&q=80"
       ]
     },
     "metrics": {
