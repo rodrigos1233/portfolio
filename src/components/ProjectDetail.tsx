@@ -123,6 +123,16 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
               })}
             </div>
           )}
+
+          {project.media?.cover_image && (
+            <div className="mt-6 overflow-hidden border border-neutral-200">
+              <img
+                src={project.media.cover_image}
+                alt={`${project.title} cover`}
+                className="w-full"
+              />
+            </div>
+          )}
         </div>
       </header>
 
@@ -160,6 +170,31 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
                 {project.markdown}
               </ReactMarkdown>
             </article>
+
+            {project.media?.gallery && project.media.gallery.length > 0 && (
+              <div className="mt-8 pt-8 border-t border-neutral-200">
+                <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-4">
+                  Gallery
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {project.media.gallery.map((url, i) => (
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block overflow-hidden border border-neutral-200 hover:border-neutral-400 transition-colors"
+                    >
+                      <img
+                        src={url}
+                        alt={`${project.title} screenshot ${i + 1}`}
+                        className="w-full"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </main>
 
           <aside>
