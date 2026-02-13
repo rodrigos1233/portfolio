@@ -41,7 +41,17 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
       onClick={() => onSelect(project.id)}
       className="block group w-full text-left cursor-pointer"
     >
-      <div className="border border-neutral-200 bg-white p-6 transition-all hover:border-neutral-400 hover:shadow-sm">
+      <div className="border border-neutral-200 bg-white transition-all hover:border-neutral-400 hover:shadow-sm">
+        {project.media?.cover_image && (
+          <div className="aspect-video overflow-hidden">
+            <img
+              src={project.media.cover_image}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+        <div className="p-6">
         <div className="flex items-start justify-between gap-4 mb-3">
           <h3 className="text-lg font-medium text-neutral-900 group-hover:text-neutral-700 transition-colors">
             {project.title}
@@ -92,6 +102,7 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
               </span>
             )}
           </div>
+        </div>
         </div>
       </div>
     </button>
