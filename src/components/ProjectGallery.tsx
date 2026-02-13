@@ -26,7 +26,7 @@ export function ProjectGallery({ images, alt, cols = 4, rows = 1 }: ProjectGalle
         Gallery
       </h2>
       <div
-        className="grid gap-3"
+        className="grid gap-1.5 sm:gap-3"
         style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
       >
         {visibleImages.map((url, i) => (
