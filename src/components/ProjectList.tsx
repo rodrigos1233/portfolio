@@ -80,7 +80,7 @@ export function ProjectList({ onSelectProject }: ProjectListProps) {
       />
 
       <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 items-start">
           {filteredProjects.map((project) => (
             <ProjectCard
               key={project.id}
