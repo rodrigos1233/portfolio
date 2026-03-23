@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 interface ImageModalProps {
@@ -9,6 +9,8 @@ interface ImageModalProps {
   alt?: string;
 }
 
+const SWIPE_THRESHOLD = 50;
+
 export function ImageModal({
   images,
   currentIndex,
@@ -18,6 +20,7 @@ export function ImageModal({
 }: ImageModalProps) {
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < images.length - 1;
+  const touchStartX = useRef<number | null>(null);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -37,10 +40,24 @@ export function ImageModal({
     };
   }, [handleKeyDown]);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (dx > SWIPE_THRESHOLD && hasPrev) onNavigate(currentIndex - 1);
+    if (dx < -SWIPE_THRESHOLD && hasNext) onNavigate(currentIndex + 1);
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
       onClick={onClose}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <button
         onClick={onClose}
@@ -61,7 +78,7 @@ export function ImageModal({
             e.stopPropagation();
             onNavigate(currentIndex - 1);
           }}
-          className="absolute left-4 text-white/70 hover:text-white transition-colors cursor-pointer"
+          className="absolute left-4 text-white/70 hover:text-white transition-colors cursor-pointer hidden sm:block"
         >
           <ChevronLeft className="w-8 h-8" />
         </button>
@@ -73,7 +90,7 @@ export function ImageModal({
             e.stopPropagation();
             onNavigate(currentIndex + 1);
           }}
-          className="absolute right-4 text-white/70 hover:text-white transition-colors cursor-pointer"
+          className="absolute right-4 text-white/70 hover:text-white transition-colors cursor-pointer hidden sm:block"
         >
           <ChevronRight className="w-8 h-8" />
         </button>
