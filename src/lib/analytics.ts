@@ -1,6 +1,11 @@
 const ANALYTICS_ENDPOINT = '/api/track';
 
-type ProjectScopedEventType = 'project_open' | 'back_to_list';
+type ProjectScopedEventType =
+  | 'project_open'
+  | 'back_to_list'
+  | 'gallery_expand';
+
+export type GalleryImagePositionBucket = '1' | '2-4' | '5+';
 
 export type PortfolioInteractionEvent =
   | {
@@ -13,14 +18,25 @@ export type PortfolioInteractionEvent =
       linkType: string;
     }
   | {
+      type: 'gallery_image_open';
+      projectId: string;
+      imagePositionBucket: GalleryImagePositionBucket;
+    }
+  | {
       type: 'filter';
       tag: string;
     };
 
 let previousEvent: PortfolioInteractionEvent | null = null;
 
+function isGalleryImagePositionBucket(
+  value: string,
+): value is GalleryImagePositionBucket {
+  return value === '1' || value === '2-4' || value === '5+';
+}
+
 function getValidEvent(event: PortfolioInteractionEvent) {
-  const normalizedType = event.type.trim() as PortfolioInteractionEvent['type'];
+  const normalizedType = event.type.trim();
 
   if (normalizedType.length === 0) {
     return null;
@@ -28,6 +44,7 @@ function getValidEvent(event: PortfolioInteractionEvent) {
 
   switch (normalizedType) {
     case 'project_open':
+    case 'gallery_expand':
     case 'back_to_list': {
       const normalizedProjectId = event.projectId?.trim();
       if (!normalizedProjectId) {
@@ -37,6 +54,24 @@ function getValidEvent(event: PortfolioInteractionEvent) {
       return {
         type: normalizedType,
         projectId: normalizedProjectId,
+      };
+    }
+    case 'gallery_image_open': {
+      const normalizedProjectId = event.projectId?.trim();
+      const normalizedImagePositionBucket = event.imagePositionBucket?.trim();
+
+      if (
+        !normalizedProjectId ||
+        !normalizedImagePositionBucket ||
+        !isGalleryImagePositionBucket(normalizedImagePositionBucket)
+      ) {
+        return null;
+      }
+
+      return {
+        type: normalizedType,
+        projectId: normalizedProjectId,
+        imagePositionBucket: normalizedImagePositionBucket,
       };
     }
     case 'external_link_click': {

@@ -173,6 +173,56 @@ describe('trackPortfolioInteraction', () => {
     );
   });
 
+  it('accepts gallery event variants with dedicated project and bucket metadata', async () => {
+    trackPortfolioInteraction({
+      type: '  gallery_expand  ',
+      projectId: '  project-alpha  ',
+    });
+    trackPortfolioInteraction({
+      type: ' gallery_image_open ',
+      projectId: ' project-alpha ',
+      imagePositionBucket: '2-4',
+    });
+
+    expect(sendBeaconMock).toHaveBeenCalledTimes(1);
+
+    const [, body] = sendBeaconMock.mock.calls[0] as [string, Blob];
+    await expect(body.text()).resolves.toBe(
+      JSON.stringify({
+        from: { type: 'gallery_expand', projectId: 'project-alpha' },
+        to: {
+          type: 'gallery_image_open',
+          projectId: 'project-alpha',
+          imagePositionBucket: '2-4',
+        },
+      }),
+    );
+  });
+
+  it('rejects gallery events with missing project ids or invalid buckets', async () => {
+    trackPortfolioInteraction({
+      type: 'gallery_expand',
+      projectId: '   ',
+    } as PortfolioInteractionEvent);
+    trackPortfolioInteraction({ type: 'project_open', projectId: 'project-alpha' });
+    trackPortfolioInteraction({
+      type: 'gallery_image_open',
+      projectId: 'project-alpha',
+      imagePositionBucket: 'hero',
+    } as PortfolioInteractionEvent);
+    trackPortfolioInteraction({ type: 'filter', tag: 'web' });
+
+    expect(sendBeaconMock).toHaveBeenCalledTimes(1);
+
+    const [, body] = sendBeaconMock.mock.calls[0] as [string, Blob];
+    await expect(body.text()).resolves.toBe(
+      JSON.stringify({
+        from: { type: 'project_open', projectId: 'project-alpha' },
+        to: { type: 'filter', tag: 'web' },
+      }),
+    );
+  });
+
   it('falls back to fetch when sendBeacon is unavailable', async () => {
     Object.defineProperty(navigator, 'sendBeacon', {
       configurable: true,
