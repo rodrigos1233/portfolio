@@ -37,12 +37,19 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
       )
     : [];
 
-  const handleClick = () => {
+  const trackInteractionSafely = () => {
     try {
-      void trackPortfolioInteraction({ type: 'project_open', id: project.id });
+      void trackPortfolioInteraction({
+        type: 'project_open',
+        projectId: project.id,
+      }).catch(() => {});
     } catch {
-      // Preserve selection even if analytics fails synchronously.
+      // Preserve selection even if analytics fails.
     }
+  };
+
+  const handleClick = () => {
+    trackInteractionSafely();
     onSelect(project.id);
   };
 

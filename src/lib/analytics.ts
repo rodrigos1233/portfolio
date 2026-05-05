@@ -1,24 +1,72 @@
 const ANALYTICS_ENDPOINT = '/api/track';
 
-export type PortfolioInteractionEvent = {
-  type: string;
-  id: string;
-};
+type ProjectScopedEventType = 'project_open' | 'back_to_list';
+
+export type PortfolioInteractionEvent =
+  | {
+      type: ProjectScopedEventType;
+      projectId: string;
+    }
+  | {
+      type: 'external_link_click';
+      projectId: string;
+      linkType: string;
+    }
+  | {
+      type: 'filter';
+      tag: string;
+    };
 
 let previousEvent: PortfolioInteractionEvent | null = null;
 
 function getValidEvent(event: PortfolioInteractionEvent) {
-  const normalizedType = event.type.trim();
-  const normalizedId = event.id.trim();
+  const normalizedType = event.type.trim() as PortfolioInteractionEvent['type'];
 
-  if (normalizedType.length === 0 || normalizedId.length === 0) {
+  if (normalizedType.length === 0) {
     return null;
   }
 
-  return {
-    type: normalizedType,
-    id: normalizedId,
-  };
+  switch (normalizedType) {
+    case 'project_open':
+    case 'back_to_list': {
+      const normalizedProjectId = event.projectId?.trim();
+      if (!normalizedProjectId) {
+        return null;
+      }
+
+      return {
+        type: normalizedType,
+        projectId: normalizedProjectId,
+      };
+    }
+    case 'external_link_click': {
+      const normalizedProjectId = event.projectId?.trim();
+      const normalizedLinkType = event.linkType?.trim();
+
+      if (!normalizedProjectId || !normalizedLinkType) {
+        return null;
+      }
+
+      return {
+        type: normalizedType,
+        projectId: normalizedProjectId,
+        linkType: normalizedLinkType,
+      };
+    }
+    case 'filter': {
+      const normalizedTag = event.tag?.trim();
+      if (!normalizedTag) {
+        return null;
+      }
+
+      return {
+        type: normalizedType,
+        tag: normalizedTag,
+      };
+    }
+    default:
+      return null;
+  }
 }
 
 async function sendAnonymousPair(

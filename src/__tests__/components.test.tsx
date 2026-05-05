@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Project } from '@/types';
 import { trackPortfolioInteraction } from '@/lib/analytics';
@@ -95,7 +95,7 @@ describe('ProjectCard', () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(trackPortfolioInteraction).toHaveBeenCalledWith({
       type: 'project_open',
-      id: 'project-alpha',
+      projectId: 'project-alpha',
     });
     expect(trackPortfolioInteraction).toHaveBeenCalledTimes(1);
   });
@@ -115,7 +115,28 @@ describe('ProjectCard', () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(trackPortfolioInteraction).toHaveBeenCalledWith({
       type: 'project_open',
-      id: 'project-alpha',
+      projectId: 'project-alpha',
+    });
+    expect(trackPortfolioInteraction).toHaveBeenCalledTimes(1);
+  });
+
+  it('still calls onSelect when analytics rejects asynchronously', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+
+    vi.mocked(trackPortfolioInteraction).mockRejectedValueOnce(
+      new Error('analytics failed'),
+    );
+
+    render(<ProjectCard project={project} onSelect={onSelect} />);
+    await user.click(screen.getByRole('button'));
+    await Promise.resolve();
+
+    expect(onSelect).toHaveBeenCalledWith('project-alpha');
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'project_open',
+      projectId: 'project-alpha',
     });
     expect(trackPortfolioInteraction).toHaveBeenCalledTimes(1);
   });
@@ -286,6 +307,10 @@ describe('ProjectList', () => {
 describe('ProjectDetail', () => {
   let ProjectDetail: typeof import('@/components/ProjectDetail').ProjectDetail;
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   beforeAll(async () => {
     const mod = await import('@/components/ProjectDetail');
     ProjectDetail = mod.ProjectDetail;
@@ -337,5 +362,117 @@ describe('ProjectDetail', () => {
 
     expect(screen.getByText(/2024-01/)).toBeInTheDocument();
     expect(screen.getByText(/present/)).toBeInTheDocument();
+  });
+
+  it('records back_to_list when clicking All projects', async () => {
+    const onBack = vi.fn();
+    const user = userEvent.setup();
+
+    render(<ProjectDetail projectId="project-alpha" onBack={onBack} />);
+    await user.click(screen.getByRole('button', { name: 'All projects' }));
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'back_to_list',
+      projectId: 'project-alpha',
+    });
+  });
+
+  it('still calls onBack when analytics rejects asynchronously', async () => {
+    const onBack = vi.fn();
+    const user = userEvent.setup();
+
+    vi.mocked(trackPortfolioInteraction).mockRejectedValueOnce(
+      new Error('analytics failed'),
+    );
+
+    render(<ProjectDetail projectId="project-alpha" onBack={onBack} />);
+    await user.click(screen.getByRole('button', { name: 'All projects' }));
+    await Promise.resolve();
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'back_to_list',
+      projectId: 'project-alpha',
+    });
+  });
+
+  it('still calls onBack when analytics throws synchronously', async () => {
+    const onBack = vi.fn();
+    const user = userEvent.setup();
+
+    vi.mocked(trackPortfolioInteraction).mockImplementationOnce(() => {
+      throw new Error('analytics failed');
+    });
+
+    render(<ProjectDetail projectId="project-alpha" onBack={onBack} />);
+    await user.click(screen.getByRole('button', { name: 'All projects' }));
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'back_to_list',
+      projectId: 'project-alpha',
+    });
+  });
+
+  it('records external_link_click with the expected link type', async () => {
+    render(<ProjectDetail projectId="project-alpha" onBack={vi.fn()} />);
+
+    const liveLink = screen.getByRole('link', { name: 'View live' });
+    liveLink.addEventListener('click', (event) => event.preventDefault());
+    fireEvent.click(liveLink);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'external_link_click',
+      projectId: 'project-alpha',
+      linkType: 'live',
+    });
+
+    const sourceLink = screen.getByRole('link', { name: 'Source code' });
+    sourceLink.addEventListener('click', (event) => event.preventDefault());
+    fireEvent.click(sourceLink);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'external_link_click',
+      projectId: 'project-alpha',
+      linkType: 'repo',
+    });
+  });
+
+  it('does not block external link clicks when analytics rejects asynchronously', async () => {
+    vi.mocked(trackPortfolioInteraction).mockRejectedValueOnce(
+      new Error('analytics failed'),
+    );
+
+    render(<ProjectDetail projectId="project-alpha" onBack={vi.fn()} />);
+
+    const liveLink = screen.getByRole('link', { name: 'View live' });
+    liveLink.addEventListener('click', (event) => event.preventDefault());
+    fireEvent.click(liveLink);
+    await Promise.resolve();
+
+    expect(liveLink).toHaveAttribute('href', 'https://alpha.example.com');
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'external_link_click',
+      projectId: 'project-alpha',
+      linkType: 'live',
+    });
+  });
+
+  it('does not block external link clicks when analytics throws synchronously', () => {
+    vi.mocked(trackPortfolioInteraction).mockImplementationOnce(() => {
+      throw new Error('analytics failed');
+    });
+
+    render(<ProjectDetail projectId="project-alpha" onBack={vi.fn()} />);
+
+    const liveLink = screen.getByRole('link', { name: 'View live' });
+    liveLink.addEventListener('click', (event) => event.preventDefault());
+    fireEvent.click(liveLink);
+
+    expect(liveLink).toHaveAttribute('href', 'https://alpha.example.com');
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'external_link_click',
+      projectId: 'project-alpha',
+      linkType: 'live',
+    });
   });
 });

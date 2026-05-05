@@ -8,6 +8,7 @@ import {
   Video,
 } from 'lucide-react';
 import type { Project } from '@/types';
+import { trackPortfolioInteraction } from '@/lib/analytics';
 
 interface ProjectDetailHeaderProps {
   project: Project;
@@ -35,11 +36,39 @@ export function ProjectDetailHeader({ project, onBack }: ProjectDetailHeaderProp
     ? Object.entries(project.links).filter(([, url]) => url != null)
     : [];
 
+  const trackInteractionSafely = (linkType?: string) => {
+    const event = linkType
+      ? {
+          type: 'external_link_click' as const,
+          projectId: project.id,
+          linkType,
+        }
+      : {
+          type: 'back_to_list' as const,
+          projectId: project.id,
+        };
+
+    try {
+      void trackPortfolioInteraction(event).catch(() => {});
+    } catch {
+      // Preserve navigation and links even if analytics fails.
+    }
+  };
+
+  const handleBackClick = () => {
+    trackInteractionSafely();
+    onBack();
+  };
+
+  const handleExternalLinkClick = (linkType: string) => {
+    trackInteractionSafely(linkType);
+  };
+
   return (
     <header className="border-b border-neutral-200 bg-white">
       <div className="max-w-5xl mx-auto px-6 py-6">
         <button
-          onClick={onBack}
+          onClick={handleBackClick}
           className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 transition-colors font-mono mb-6 cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -82,6 +111,7 @@ export function ProjectDetailHeader({ project, onBack }: ProjectDetailHeaderProp
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => handleExternalLinkClick(key)}
                   className={`inline-flex items-center gap-2 px-4 py-2 text-sm rounded font-mono transition-colors ${
                     isPrimary
                       ? 'bg-neutral-900 text-white hover:bg-neutral-800'
