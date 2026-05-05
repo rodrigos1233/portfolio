@@ -288,4 +288,32 @@ describe('worker analytics ingestion', () => {
       'live',
     ]);
   });
+
+  it('uses an empty link_type sentinel for non-link events', async () => {
+    const env = createEnv();
+
+    await worker.fetch(
+      new Request('https://example.com/api/track', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          from: { type: 'project_open', projectId: 'project-alpha' },
+          to: {
+            type: 'gallery_expand',
+            projectId: 'project-alpha',
+          },
+        }),
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(env.DB.calls[0]?.bindings).toEqual([
+      expect.any(String),
+      'project-alpha',
+      'project_open',
+      'gallery_expand',
+      '',
+    ]);
+  });
 });

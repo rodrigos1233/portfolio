@@ -109,7 +109,7 @@ async function handleTrackRequest(request: Request, env: WorkerEnv) {
   }
 
   const day = new Date().toISOString().slice(0, 10);
-  const linkType = payload.to.type === 'external_link_click' ? payload.to.linkType : null;
+  const linkType = payload.to.type === 'external_link_click' ? payload.to.linkType : '';
 
   await env.DB
     .prepare(
