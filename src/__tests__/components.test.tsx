@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Project } from '@/types';
+import { trackPortfolioInteraction } from '@/lib/analytics';
 import { ProjectCard } from '@/components/ProjectCard';
 import { FilterBar } from '@/components/FilterBar';
 
@@ -57,8 +58,16 @@ vi.mock('mermaid', () => ({
   },
 }));
 
+vi.mock('@/lib/analytics', () => ({
+  trackPortfolioInteraction: vi.fn(),
+}));
+
 describe('ProjectCard', () => {
   const project = mockProjects[0];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders title, tagline, and status', () => {
     render(<ProjectCard project={project} onSelect={vi.fn()} />);
@@ -83,6 +92,32 @@ describe('ProjectCard', () => {
     await user.click(screen.getByRole('button'));
 
     expect(onSelect).toHaveBeenCalledWith('project-alpha');
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'project_open',
+      id: 'project-alpha',
+    });
+    expect(trackPortfolioInteraction).toHaveBeenCalledTimes(1);
+  });
+
+  it('still calls onSelect when analytics throws synchronously', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+
+    vi.mocked(trackPortfolioInteraction).mockImplementation(() => {
+      throw new Error('analytics failed');
+    });
+
+    render(<ProjectCard project={project} onSelect={onSelect} />);
+    await user.click(screen.getByRole('button'));
+
+    expect(onSelect).toHaveBeenCalledWith('project-alpha');
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'project_open',
+      id: 'project-alpha',
+    });
+    expect(trackPortfolioInteraction).toHaveBeenCalledTimes(1);
   });
 
   it('shows +N when stack has more than 5 items', () => {

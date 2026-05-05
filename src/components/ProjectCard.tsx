@@ -7,6 +7,7 @@ import {
   Video,
 } from 'lucide-react';
 import { Project } from '@/types';
+import { trackPortfolioInteraction } from '@/lib/analytics';
 
 interface ProjectCardProps {
   project: Project;
@@ -36,9 +37,18 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
       )
     : [];
 
+  const handleClick = () => {
+    try {
+      void trackPortfolioInteraction({ type: 'project_open', id: project.id });
+    } catch {
+      // Preserve selection even if analytics fails synchronously.
+    }
+    onSelect(project.id);
+  };
+
   return (
     <button
-      onClick={() => onSelect(project.id)}
+      onClick={handleClick}
       className="block group w-full text-left cursor-pointer"
     >
       <div className="border border-neutral-200 bg-white transition-all hover:border-neutral-400 hover:shadow-sm">
