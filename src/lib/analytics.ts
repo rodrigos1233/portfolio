@@ -35,8 +35,19 @@ function isGalleryImagePositionBucket(
   return value === '1' || value === '2-4' || value === '5+';
 }
 
-function getValidEvent(event: PortfolioInteractionEvent) {
-  const normalizedType = event.type.trim();
+export function normalizePortfolioInteractionEvent(
+  event: unknown,
+): PortfolioInteractionEvent | null {
+  if (!event || typeof event !== 'object') {
+    return null;
+  }
+
+  const rawEvent = event as Record<string, unknown>;
+  if (typeof rawEvent.type !== 'string') {
+    return null;
+  }
+
+  const normalizedType = rawEvent.type.trim();
 
   if (normalizedType.length === 0) {
     return null;
@@ -46,7 +57,10 @@ function getValidEvent(event: PortfolioInteractionEvent) {
     case 'project_open':
     case 'gallery_expand':
     case 'back_to_list': {
-      const normalizedProjectId = event.projectId?.trim();
+      const normalizedProjectId =
+        typeof rawEvent.projectId === 'string'
+          ? rawEvent.projectId.trim()
+          : null;
       if (!normalizedProjectId) {
         return null;
       }
@@ -57,8 +71,14 @@ function getValidEvent(event: PortfolioInteractionEvent) {
       };
     }
     case 'gallery_image_open': {
-      const normalizedProjectId = event.projectId?.trim();
-      const normalizedImagePositionBucket = event.imagePositionBucket?.trim();
+      const normalizedProjectId =
+        typeof rawEvent.projectId === 'string'
+          ? rawEvent.projectId.trim()
+          : null;
+      const normalizedImagePositionBucket =
+        typeof rawEvent.imagePositionBucket === 'string'
+          ? rawEvent.imagePositionBucket.trim()
+          : null;
 
       if (
         !normalizedProjectId ||
@@ -75,8 +95,14 @@ function getValidEvent(event: PortfolioInteractionEvent) {
       };
     }
     case 'external_link_click': {
-      const normalizedProjectId = event.projectId?.trim();
-      const normalizedLinkType = event.linkType?.trim();
+      const normalizedProjectId =
+        typeof rawEvent.projectId === 'string'
+          ? rawEvent.projectId.trim()
+          : null;
+      const normalizedLinkType =
+        typeof rawEvent.linkType === 'string'
+          ? rawEvent.linkType.trim()
+          : null;
 
       if (!normalizedProjectId || !normalizedLinkType) {
         return null;
@@ -89,7 +115,8 @@ function getValidEvent(event: PortfolioInteractionEvent) {
       };
     }
     case 'filter': {
-      const normalizedTag = event.tag?.trim();
+      const normalizedTag =
+        typeof rawEvent.tag === 'string' ? rawEvent.tag.trim() : null;
       if (!normalizedTag) {
         return null;
       }
@@ -128,7 +155,7 @@ async function sendAnonymousPair(
 }
 
 export async function trackPortfolioInteraction(event: PortfolioInteractionEvent) {
-  const validEvent = getValidEvent(event);
+  const validEvent = normalizePortfolioInteractionEvent(event);
 
   if (!validEvent) {
     return;
