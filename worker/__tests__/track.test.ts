@@ -121,6 +121,29 @@ describe('worker analytics ingestion', () => {
     expect(env.DB.prepare).not.toHaveBeenCalled();
   });
 
+  it('rejects removed non-project events from the shared contract', async () => {
+    const env = createEnv();
+
+    const response = await worker.fetch(
+      new Request('https://example.com/api/track', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          from: { type: 'project_open', projectId: 'project-alpha' },
+          to: {
+            type: 'filter',
+            tag: 'web',
+          },
+        }),
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(400);
+    expect(env.DB.prepare).not.toHaveBeenCalled();
+  });
+
   it('rejects mismatched project scopes', async () => {
     const env = createEnv();
 
@@ -223,6 +246,7 @@ describe('worker analytics ingestion', () => {
       'project_open',
       'external_link_click',
       'repo',
+      '',
     ]);
   });
 
@@ -253,7 +277,32 @@ describe('worker analytics ingestion', () => {
       'project_open',
       'external_link_click',
       'repo',
+      '',
     ]);
+  });
+
+  it('rejects external link payloads outside the supported allowlist', async () => {
+    const env = createEnv();
+
+    const response = await worker.fetch(
+      new Request('https://example.com/api/track', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          from: { type: 'project_open', projectId: 'project-alpha' },
+          to: {
+            type: 'external_link_click',
+            projectId: 'project-alpha',
+            linkType: 'whitepaper',
+          },
+        }),
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(400);
+    expect(env.DB.prepare).not.toHaveBeenCalled();
   });
 
   it('increments an aggregate counter row', async () => {
@@ -286,6 +335,7 @@ describe('worker analytics ingestion', () => {
       'project_open',
       'external_link_click',
       'live',
+      '',
     ]);
   });
 
@@ -314,6 +364,37 @@ describe('worker analytics ingestion', () => {
       'project_open',
       'gallery_expand',
       '',
+      '',
+    ]);
+  });
+
+  it('persists gallery image bucket metadata in the aggregate key', async () => {
+    const env = createEnv();
+
+    await worker.fetch(
+      new Request('https://example.com/api/track', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          from: { type: 'gallery_expand', projectId: 'project-alpha' },
+          to: {
+            type: 'gallery_image_open',
+            projectId: 'project-alpha',
+            imagePositionBucket: '5+',
+          },
+        }),
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(env.DB.calls[0]?.bindings).toEqual([
+      expect.any(String),
+      'project-alpha',
+      'gallery_expand',
+      'gallery_image_open',
+      '',
+      '5+',
     ]);
   });
 });

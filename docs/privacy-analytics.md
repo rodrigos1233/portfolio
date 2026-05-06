@@ -43,7 +43,6 @@ Current event variants:
 - `external_link_click` with `projectId` and `linkType`
 - `gallery_expand` with `projectId`
 - `gallery_image_open` with `projectId` and `imagePositionBucket`
-- `filter` with `tag`
 
 `gallery_image_open` uses bucketed positions only:
 
@@ -62,9 +61,11 @@ Stored dimensions:
 - `from_event`
 - `to_event`
 - `link_type`
+- `image_position_bucket`
 - `count`
 
 For non-link events, `link_type` is stored as an empty-string sentinel so D1 uniqueness and upsert behavior remain correct.
+For non-gallery-image events, `image_position_bucket` is stored as an empty-string sentinel for the same reason.
 
 ## Worker Behavior
 

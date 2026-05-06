@@ -1,4 +1,5 @@
 import {
+  type GalleryImagePositionBucket,
   normalizePortfolioInteractionEvent,
   type PortfolioInteractionEvent,
 } from '../src/lib/analytics';
@@ -32,12 +33,6 @@ function json(status: number, body: Record<string, unknown>) {
   });
 }
 
-function hasProjectId(
-  event: PortfolioInteractionEvent,
-): event is PortfolioInteractionEvent & { projectId: string } {
-  return 'projectId' in event;
-}
-
 export function validateTrackPayload(input: unknown): TrackPayload | null {
   if (!input || typeof input !== 'object') {
     return null;
@@ -58,14 +53,20 @@ function getProjectId(
   from: PortfolioInteractionEvent,
   to: PortfolioInteractionEvent,
 ) {
-  const fromProjectId = hasProjectId(from) ? from.projectId : null;
-  const toProjectId = hasProjectId(to) ? to.projectId : null;
+  const fromProjectId = from.projectId;
+  const toProjectId = to.projectId;
 
   if (fromProjectId && toProjectId && fromProjectId !== toProjectId) {
     return null;
   }
 
   return toProjectId ?? fromProjectId;
+}
+
+function getImagePositionBucket(
+  event: PortfolioInteractionEvent,
+): GalleryImagePositionBucket | '' {
+  return event.type === 'gallery_image_open' ? event.imagePositionBucket : '';
 }
 
 async function handleTrackRequest(request: Request, env: WorkerEnv) {
@@ -110,15 +111,31 @@ async function handleTrackRequest(request: Request, env: WorkerEnv) {
 
   const day = new Date().toISOString().slice(0, 10);
   const linkType = payload.to.type === 'external_link_click' ? payload.to.linkType : '';
+  const imagePositionBucket = getImagePositionBucket(payload.to);
 
   await env.DB
     .prepare(
-      `INSERT INTO analytics_click_pairs (day, project_id, from_event, to_event, link_type, count)
-       VALUES (?, ?, ?, ?, ?, 1)
-       ON CONFLICT(day, project_id, from_event, to_event, link_type)
+      `INSERT INTO analytics_click_pairs (
+         day,
+         project_id,
+         from_event,
+         to_event,
+         link_type,
+         image_position_bucket,
+         count
+       )
+       VALUES (?, ?, ?, ?, ?, ?, 1)
+       ON CONFLICT(day, project_id, from_event, to_event, link_type, image_position_bucket)
        DO UPDATE SET count = count + 1`,
     )
-    .bind(day, projectId, payload.from.type, payload.to.type, linkType)
+    .bind(
+      day,
+      projectId,
+      payload.from.type,
+      payload.to.type,
+      linkType,
+      imagePositionBucket,
+    )
     .run();
 
   return new Response(null, { status: 202 });
