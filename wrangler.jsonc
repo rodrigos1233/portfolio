@@ -1,8 +1,16 @@
 {
   "name": "portfolio",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-02-09",
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "portfolio-analytics",
+      "database_id": "27fe3910-62cc-4348-a41b-bcb2437e8d77"
+    }
+  ]
 }

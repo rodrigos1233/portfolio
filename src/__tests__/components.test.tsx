@@ -1,8 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Project } from '@/types';
+import { trackPortfolioInteraction } from '@/lib/analytics';
 import { ProjectCard } from '@/components/ProjectCard';
 import { FilterBar } from '@/components/FilterBar';
+import { ProjectGallery } from '@/components/ProjectGallery';
 
 const mockProjects: Project[] = [
   {
@@ -17,6 +19,15 @@ const mockProjects: Project[] = [
     featured: true,
     timeframe: { start: '2024-01' },
     links: { repo: 'https://github.com/test/alpha', live: 'https://alpha.example.com' },
+    media: {
+      gallery: [
+        '/alpha-1.png',
+        '/alpha-2.png',
+        '/alpha-3.png',
+        '/alpha-4.png',
+        '/alpha-5.png',
+      ],
+    },
   },
   {
     id: 'project-beta',
@@ -57,8 +68,16 @@ vi.mock('mermaid', () => ({
   },
 }));
 
+vi.mock('@/lib/analytics', () => ({
+  trackPortfolioInteraction: vi.fn(),
+}));
+
 describe('ProjectCard', () => {
   const project = mockProjects[0];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders title, tagline, and status', () => {
     render(<ProjectCard project={project} onSelect={vi.fn()} />);
@@ -83,6 +102,53 @@ describe('ProjectCard', () => {
     await user.click(screen.getByRole('button'));
 
     expect(onSelect).toHaveBeenCalledWith('project-alpha');
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'project_open',
+      projectId: 'project-alpha',
+    });
+    expect(trackPortfolioInteraction).toHaveBeenCalledTimes(1);
+  });
+
+  it('still calls onSelect when analytics throws synchronously', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+
+    vi.mocked(trackPortfolioInteraction).mockImplementation(() => {
+      throw new Error('analytics failed');
+    });
+
+    render(<ProjectCard project={project} onSelect={onSelect} />);
+    await user.click(screen.getByRole('button'));
+
+    expect(onSelect).toHaveBeenCalledWith('project-alpha');
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'project_open',
+      projectId: 'project-alpha',
+    });
+    expect(trackPortfolioInteraction).toHaveBeenCalledTimes(1);
+  });
+
+  it('still calls onSelect when analytics rejects asynchronously', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+
+    vi.mocked(trackPortfolioInteraction).mockRejectedValueOnce(
+      new Error('analytics failed'),
+    );
+
+    render(<ProjectCard project={project} onSelect={onSelect} />);
+    await user.click(screen.getByRole('button'));
+    await Promise.resolve();
+
+    expect(onSelect).toHaveBeenCalledWith('project-alpha');
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'project_open',
+      projectId: 'project-alpha',
+    });
+    expect(trackPortfolioInteraction).toHaveBeenCalledTimes(1);
   });
 
   it('shows +N when stack has more than 5 items', () => {
@@ -190,6 +256,142 @@ describe('FilterBar', () => {
   });
 });
 
+describe('ProjectGallery', () => {
+  const galleryImages = [
+    '/alpha-1.png',
+    '/alpha-2.png',
+    '/alpha-3.png',
+    '/alpha-4.png',
+    '/alpha-5.png',
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('records gallery_expand only when opening the overflow section', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ProjectGallery
+        projectId="project-alpha"
+        images={galleryImages}
+        alt="Project Alpha"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: '+1 more' }));
+
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'gallery_expand',
+      projectId: 'project-alpha',
+    });
+    expect(trackPortfolioInteraction).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole('button', { name: 'Show less' }));
+
+    expect(trackPortfolioInteraction).toHaveBeenCalledTimes(1);
+  });
+
+  it('still expands when analytics rejects asynchronously', async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(trackPortfolioInteraction).mockRejectedValueOnce(
+      new Error('analytics failed'),
+    );
+
+    render(
+      <ProjectGallery
+        projectId="project-alpha"
+        images={galleryImages}
+        alt="Project Alpha"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: '+1 more' }));
+    await Promise.resolve();
+
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'gallery_expand',
+      projectId: 'project-alpha',
+    });
+    expect(screen.getByRole('button', { name: 'Show less' })).toBeInTheDocument();
+  });
+
+  it('records gallery_image_open with a bucketed position and preserves modal behavior', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ProjectGallery
+        projectId="project-alpha"
+        images={galleryImages}
+        alt="Project Alpha"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Project Alpha screenshot 2' }));
+
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'gallery_image_open',
+      projectId: 'project-alpha',
+      imagePositionBucket: '2-4',
+    });
+    expect(trackPortfolioInteraction).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('2 / 5')).toBeInTheDocument();
+  });
+
+  it('still opens the modal when analytics throws synchronously', async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(trackPortfolioInteraction).mockImplementationOnce(() => {
+      throw new Error('analytics failed');
+    });
+
+    render(
+      <ProjectGallery
+        projectId="project-alpha"
+        images={galleryImages}
+        alt="Project Alpha"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Project Alpha screenshot 1' }));
+
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'gallery_image_open',
+      projectId: 'project-alpha',
+      imagePositionBucket: '1',
+    });
+    expect(screen.getByText('1 / 5')).toBeInTheDocument();
+  });
+
+  it('uses a 5+ bucket instead of raw image names for later gallery images', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ProjectGallery
+        projectId="project-alpha"
+        images={galleryImages}
+        alt="Project Alpha"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: '+1 more' }));
+    await user.click(screen.getByRole('button', { name: 'Project Alpha screenshot 5' }));
+
+    expect(trackPortfolioInteraction).toHaveBeenLastCalledWith({
+      type: 'gallery_image_open',
+      projectId: 'project-alpha',
+      imagePositionBucket: '5+',
+    });
+    expect(trackPortfolioInteraction).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        imageName: '/alpha-5.png',
+      }),
+    );
+  });
+});
+
 describe('ProjectList', () => {
   // Lazy import so the vi.mock above takes effect
   let ProjectList: typeof import('@/components/ProjectList').ProjectList;
@@ -251,6 +453,10 @@ describe('ProjectList', () => {
 describe('ProjectDetail', () => {
   let ProjectDetail: typeof import('@/components/ProjectDetail').ProjectDetail;
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   beforeAll(async () => {
     const mod = await import('@/components/ProjectDetail');
     ProjectDetail = mod.ProjectDetail;
@@ -302,5 +508,133 @@ describe('ProjectDetail', () => {
 
     expect(screen.getByText(/2024-01/)).toBeInTheDocument();
     expect(screen.getByText(/present/)).toBeInTheDocument();
+  });
+
+  it('records back_to_list when clicking All projects', async () => {
+    const onBack = vi.fn();
+    const user = userEvent.setup();
+
+    render(<ProjectDetail projectId="project-alpha" onBack={onBack} />);
+    await user.click(screen.getByRole('button', { name: 'All projects' }));
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'back_to_list',
+      projectId: 'project-alpha',
+    });
+  });
+
+  it('still calls onBack when analytics rejects asynchronously', async () => {
+    const onBack = vi.fn();
+    const user = userEvent.setup();
+
+    vi.mocked(trackPortfolioInteraction).mockRejectedValueOnce(
+      new Error('analytics failed'),
+    );
+
+    render(<ProjectDetail projectId="project-alpha" onBack={onBack} />);
+    await user.click(screen.getByRole('button', { name: 'All projects' }));
+    await Promise.resolve();
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'back_to_list',
+      projectId: 'project-alpha',
+    });
+  });
+
+  it('still calls onBack when analytics throws synchronously', async () => {
+    const onBack = vi.fn();
+    const user = userEvent.setup();
+
+    vi.mocked(trackPortfolioInteraction).mockImplementationOnce(() => {
+      throw new Error('analytics failed');
+    });
+
+    render(<ProjectDetail projectId="project-alpha" onBack={onBack} />);
+    await user.click(screen.getByRole('button', { name: 'All projects' }));
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'back_to_list',
+      projectId: 'project-alpha',
+    });
+  });
+
+  it('records external_link_click with the expected link type', async () => {
+    render(<ProjectDetail projectId="project-alpha" onBack={vi.fn()} />);
+
+    const liveLink = screen.getByRole('link', { name: 'View live' });
+    liveLink.addEventListener('click', (event) => event.preventDefault());
+    fireEvent.click(liveLink);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'external_link_click',
+      projectId: 'project-alpha',
+      linkType: 'live',
+    });
+
+    const sourceLink = screen.getByRole('link', { name: 'Source code' });
+    sourceLink.addEventListener('click', (event) => event.preventDefault());
+    fireEvent.click(sourceLink);
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'external_link_click',
+      projectId: 'project-alpha',
+      linkType: 'repo',
+    });
+  });
+
+  it('passes projectId into gallery analytics and preserves the first-image bucket', async () => {
+    const user = userEvent.setup();
+
+    render(<ProjectDetail projectId="project-alpha" onBack={vi.fn()} />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'Project Alpha screenshot 1' }),
+    );
+
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'gallery_image_open',
+      projectId: 'project-alpha',
+      imagePositionBucket: '1',
+    });
+  });
+
+  it('does not block external link clicks when analytics rejects asynchronously', async () => {
+    vi.mocked(trackPortfolioInteraction).mockRejectedValueOnce(
+      new Error('analytics failed'),
+    );
+
+    render(<ProjectDetail projectId="project-alpha" onBack={vi.fn()} />);
+
+    const liveLink = screen.getByRole('link', { name: 'View live' });
+    liveLink.addEventListener('click', (event) => event.preventDefault());
+    fireEvent.click(liveLink);
+    await Promise.resolve();
+
+    expect(liveLink).toHaveAttribute('href', 'https://alpha.example.com');
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'external_link_click',
+      projectId: 'project-alpha',
+      linkType: 'live',
+    });
+  });
+
+  it('does not block external link clicks when analytics throws synchronously', () => {
+    vi.mocked(trackPortfolioInteraction).mockImplementationOnce(() => {
+      throw new Error('analytics failed');
+    });
+
+    render(<ProjectDetail projectId="project-alpha" onBack={vi.fn()} />);
+
+    const liveLink = screen.getByRole('link', { name: 'View live' });
+    liveLink.addEventListener('click', (event) => event.preventDefault());
+    fireEvent.click(liveLink);
+
+    expect(liveLink).toHaveAttribute('href', 'https://alpha.example.com');
+    expect(trackPortfolioInteraction).toHaveBeenCalledWith({
+      type: 'external_link_click',
+      projectId: 'project-alpha',
+      linkType: 'live',
+    });
   });
 });

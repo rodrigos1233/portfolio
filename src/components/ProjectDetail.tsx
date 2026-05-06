@@ -40,6 +40,7 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
           <main className="bg-white border border-neutral-200 p-8">
             <ProjectMarkdown markdown={project.markdown} />
             <ProjectGallery
+              projectId={project.id}
               images={project.media?.gallery ?? []}
               alt={project.title}
             />

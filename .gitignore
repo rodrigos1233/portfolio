@@ -89,6 +89,7 @@ typings/
 
 # Vite
 dist/
+.worktrees/
 
 # Portfolio generated data (keep sample)
 src/_portfolio/projects.json

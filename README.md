@@ -95,7 +95,33 @@ wrangler.jsonc              # Cloudflare Workers deployment config
 
 ## Deployment
 
-The site deploys to Cloudflare Workers as static assets. `wrangler.jsonc` configures the `dist/` directory as the asset source with SPA fallback routing for client-side navigation.
+The site deploys to Cloudflare Workers. `wrangler.jsonc` configures:
+
+- `worker/index.ts` as the Worker entrypoint
+- `dist/` as the static asset source
+- SPA fallback routing for client-side navigation
+- a D1 binding named `DB` for anonymous click-pair analytics storage
+
+Apply the D1 schema with:
+
+```sh
+npx wrangler d1 migrations apply portfolio-analytics --remote
+```
+
+The analytics table migration lives at `migrations/0001_anonymous_click_pairs.sql`.
+
+## Anonymous Analytics
+
+The portfolio includes first-party, privacy-minimal interaction logging for aggregate click-pair analysis.
+
+- Tracks only a small allowlist of interactions such as project opens, back navigation, external project links, gallery expands, and gallery image opens.
+- Stores only derived event pairs, not raw per-visitor histories.
+- Uses no cookies, no `localStorage`, and no `sessionStorage`.
+- Uses no persistent identifier and no third-party analytics service.
+- Sends analytics to the site’s own `POST /api/track` Worker endpoint.
+- Stores aggregated counters in D1 by day/project/action pair.
+
+See [docs/privacy-analytics.md](docs/privacy-analytics.md) for the exact event model, storage posture, and limitations.
 
 ## Tech stack
 
