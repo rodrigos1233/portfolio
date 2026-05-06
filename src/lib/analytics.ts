@@ -5,6 +5,14 @@ type ProjectScopedEventType =
   | 'back_to_list'
   | 'gallery_expand';
 
+export type PortfolioLinkType =
+  | 'live'
+  | 'repo'
+  | 'docs'
+  | 'demo'
+  | 'post'
+  | 'video';
+
 export type GalleryImagePositionBucket = '1' | '2-4' | '5+';
 
 export type PortfolioInteractionEvent =
@@ -15,19 +23,26 @@ export type PortfolioInteractionEvent =
   | {
       type: 'external_link_click';
       projectId: string;
-      linkType: string;
+      linkType: PortfolioLinkType;
     }
   | {
       type: 'gallery_image_open';
       projectId: string;
       imagePositionBucket: GalleryImagePositionBucket;
-    }
-  | {
-      type: 'filter';
-      tag: string;
     };
 
 let previousEvent: PortfolioInteractionEvent | null = null;
+
+function isPortfolioLinkType(value: string): value is PortfolioLinkType {
+  return (
+    value === 'live' ||
+    value === 'repo' ||
+    value === 'docs' ||
+    value === 'demo' ||
+    value === 'post' ||
+    value === 'video'
+  );
+}
 
 function isGalleryImagePositionBucket(
   value: string,
@@ -104,7 +119,11 @@ export function normalizePortfolioInteractionEvent(
           ? rawEvent.linkType.trim()
           : null;
 
-      if (!normalizedProjectId || !normalizedLinkType) {
+      if (
+        !normalizedProjectId ||
+        !normalizedLinkType ||
+        !isPortfolioLinkType(normalizedLinkType)
+      ) {
         return null;
       }
 
@@ -112,18 +131,6 @@ export function normalizePortfolioInteractionEvent(
         type: normalizedType,
         projectId: normalizedProjectId,
         linkType: normalizedLinkType,
-      };
-    }
-    case 'filter': {
-      const normalizedTag =
-        typeof rawEvent.tag === 'string' ? rawEvent.tag.trim() : null;
-      if (!normalizedTag) {
-        return null;
-      }
-
-      return {
-        type: normalizedType,
-        tag: normalizedTag,
       };
     }
     default:

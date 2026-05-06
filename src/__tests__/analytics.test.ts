@@ -74,7 +74,7 @@ describe('trackPortfolioInteraction', () => {
 
   it('sends one derived pair on the second valid event via sendBeacon', async () => {
     trackPortfolioInteraction({ type: 'project_open', projectId: 'project-alpha' });
-    trackPortfolioInteraction({ type: 'filter', tag: 'web' });
+    trackPortfolioInteraction({ type: 'back_to_list', projectId: 'project-alpha' });
 
     expect(sendBeaconMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).not.toHaveBeenCalled();
@@ -85,7 +85,7 @@ describe('trackPortfolioInteraction', () => {
     await expect(body.text()).resolves.toBe(
       JSON.stringify({
         from: { type: 'project_open', projectId: 'project-alpha' },
-        to: { type: 'filter', tag: 'web' },
+        to: { type: 'back_to_list', projectId: 'project-alpha' },
       }),
     );
   });
@@ -94,8 +94,8 @@ describe('trackPortfolioInteraction', () => {
     trackPortfolioInteraction({ type: '', projectId: 'project-alpha' });
     trackPortfolioInteraction({ type: 'project_open', projectId: '   ' });
     trackPortfolioInteraction({ type: 'project_open', projectId: 'project-alpha' });
-    trackPortfolioInteraction({ type: ' ', tag: 'filter-web' });
-    trackPortfolioInteraction({ type: 'filter', tag: 'web' });
+    trackPortfolioInteraction({ type: 'filter', tag: 'web' } as PortfolioInteractionEvent);
+    trackPortfolioInteraction({ type: 'back_to_list', projectId: 'project-alpha' });
 
     expect(sendBeaconMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).not.toHaveBeenCalled();
@@ -137,7 +137,10 @@ describe('trackPortfolioInteraction', () => {
       type: 'project_open',
       tag: 'web',
     } as PortfolioInteractionEvent);
-    trackPortfolioInteraction({ type: 'filter', tag: 'web' });
+    trackPortfolioInteraction({
+      type: 'back_to_list',
+      projectId: 'project-alpha',
+    });
 
     expect(sendBeaconMock).toHaveBeenCalledTimes(1);
 
@@ -145,13 +148,41 @@ describe('trackPortfolioInteraction', () => {
     await expect(body.text()).resolves.toBe(
       JSON.stringify({
         from: { type: 'project_open', projectId: 'project-alpha' },
-        to: { type: 'filter', tag: 'web' },
+        to: { type: 'back_to_list', projectId: 'project-alpha' },
       }),
     );
   });
 
   it('preserves dedicated link metadata in the derived payload', async () => {
     trackPortfolioInteraction({ type: 'project_open', projectId: 'project-alpha' });
+    trackPortfolioInteraction({
+      type: 'external_link_click',
+      projectId: 'project-alpha',
+      linkType: 'repo',
+    });
+
+    expect(sendBeaconMock).toHaveBeenCalledTimes(1);
+
+    const [, body] = sendBeaconMock.mock.calls[0] as [string, Blob];
+    await expect(body.text()).resolves.toBe(
+      JSON.stringify({
+        from: { type: 'project_open', projectId: 'project-alpha' },
+        to: {
+          type: 'external_link_click',
+          projectId: 'project-alpha',
+          linkType: 'repo',
+        },
+      }),
+    );
+  });
+
+  it('rejects unknown external link types and keeps the previous valid event buffered', async () => {
+    trackPortfolioInteraction({ type: 'project_open', projectId: 'project-alpha' });
+    trackPortfolioInteraction({
+      type: 'external_link_click',
+      projectId: 'project-alpha',
+      linkType: 'whitepaper',
+    } as PortfolioInteractionEvent);
     trackPortfolioInteraction({
       type: 'external_link_click',
       projectId: 'project-alpha',
@@ -210,7 +241,10 @@ describe('trackPortfolioInteraction', () => {
       projectId: 'project-alpha',
       imagePositionBucket: 'hero',
     } as PortfolioInteractionEvent);
-    trackPortfolioInteraction({ type: 'filter', tag: 'web' });
+    trackPortfolioInteraction({
+      type: 'back_to_list',
+      projectId: 'project-alpha',
+    });
 
     expect(sendBeaconMock).toHaveBeenCalledTimes(1);
 
@@ -218,7 +252,7 @@ describe('trackPortfolioInteraction', () => {
     await expect(body.text()).resolves.toBe(
       JSON.stringify({
         from: { type: 'project_open', projectId: 'project-alpha' },
-        to: { type: 'filter', tag: 'web' },
+        to: { type: 'back_to_list', projectId: 'project-alpha' },
       }),
     );
   });
@@ -230,7 +264,10 @@ describe('trackPortfolioInteraction', () => {
     });
 
     trackPortfolioInteraction({ type: 'project_open', projectId: 'project-alpha' });
-    await trackPortfolioInteraction({ type: 'filter', tag: 'web' });
+    await trackPortfolioInteraction({
+      type: 'back_to_list',
+      projectId: 'project-alpha',
+    });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(sendBeaconMock).not.toHaveBeenCalled();
@@ -246,7 +283,7 @@ describe('trackPortfolioInteraction', () => {
     expect(init?.body).toBe(
       JSON.stringify({
         from: { type: 'project_open', projectId: 'project-alpha' },
-        to: { type: 'filter', tag: 'web' },
+        to: { type: 'back_to_list', projectId: 'project-alpha' },
       }),
     );
   });
@@ -255,7 +292,10 @@ describe('trackPortfolioInteraction', () => {
     sendBeaconMock.mockReturnValue(false);
 
     trackPortfolioInteraction({ type: 'project_open', projectId: 'project-alpha' });
-    await trackPortfolioInteraction({ type: 'filter', tag: 'web' });
+    await trackPortfolioInteraction({
+      type: 'back_to_list',
+      projectId: 'project-alpha',
+    });
 
     expect(sendBeaconMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -271,7 +311,7 @@ describe('trackPortfolioInteraction', () => {
     expect(init?.body).toBe(
       JSON.stringify({
         from: { type: 'project_open', projectId: 'project-alpha' },
-        to: { type: 'filter', tag: 'web' },
+        to: { type: 'back_to_list', projectId: 'project-alpha' },
       }),
     );
   });

@@ -15,9 +15,9 @@ function readWranglerConfig() {
   return JSON.parse(rawConfig) as WranglerConfig;
 }
 
-function readMigration() {
+function readMigration(filename: string) {
   return readFileSync(
-    resolve(process.cwd(), 'migrations/0001_anonymous_click_pairs.sql'),
+    resolve(process.cwd(), `migrations/${filename}`),
     'utf8',
   );
 }
@@ -36,8 +36,8 @@ describe('worker D1 wiring', () => {
     ]);
   });
 
-  it('ships the analytics click-pair aggregation schema', () => {
-    const migration = readMigration();
+  it('ships the base analytics click-pair aggregation schema', () => {
+    const migration = readMigration('0001_anonymous_click_pairs.sql');
 
     expect(migration).toContain('CREATE TABLE analytics_click_pairs');
     expect(migration).toContain('day TEXT NOT NULL');
@@ -48,6 +48,21 @@ describe('worker D1 wiring', () => {
     expect(migration).toContain('count INTEGER NOT NULL DEFAULT 0');
     expect(migration).toContain(
       'UNIQUE (day, project_id, from_event, to_event, link_type)',
+    );
+  });
+
+  it('ships a follow-up migration for gallery image bucket persistence', () => {
+    const migration = readMigration('0002_add_image_position_bucket.sql');
+
+    expect(migration).toContain(
+      'ALTER TABLE analytics_click_pairs RENAME TO analytics_click_pairs_old',
+    );
+    expect(migration).toContain("image_position_bucket TEXT NOT NULL DEFAULT ''");
+    expect(migration).toContain(
+      'UNIQUE (day, project_id, from_event, to_event, link_type, image_position_bucket)',
+    );
+    expect(migration).toContain(
+      'INSERT INTO analytics_click_pairs (',
     );
   });
 });
