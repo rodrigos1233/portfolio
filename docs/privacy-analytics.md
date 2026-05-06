@@ -44,6 +44,15 @@ Current event variants:
 - `gallery_expand` with `projectId`
 - `gallery_image_open` with `projectId` and `imagePositionBucket`
 
+Allowed `external_link_click.linkType` values:
+
+- `live`
+- `repo`
+- `docs`
+- `demo`
+- `post`
+- `video`
+
 `gallery_image_open` uses bucketed positions only:
 
 - `1`

@@ -35,6 +35,7 @@ Expected: FAIL because the current implementation still accepts `filter`, accept
 - Modify: `src/lib/analytics.ts`
 - Modify: `worker/index.ts`
 - Modify: `migrations/0001_anonymous_click_pairs.sql`
+- Create: `migrations/0002_add_image_position_bucket.sql`
 - Modify: `docs/privacy-analytics.md`
 
 **Step 1: Write minimal implementation**
@@ -56,6 +57,7 @@ Expected: PASS
 - Verify: `src/lib/analytics.ts`
 - Verify: `worker/index.ts`
 - Verify: `migrations/0001_anonymous_click_pairs.sql`
+- Verify: `migrations/0002_add_image_position_bucket.sql`
 
 **Step 1: Run the full suite**
 

@@ -20,6 +20,7 @@ Address the three blocking Copilot review findings on PR `#5` without expanding 
 - `worker/__tests__/track.test.ts`
 - `worker/__tests__/config.test.ts`
 - `migrations/0001_anonymous_click_pairs.sql`
+- `migrations/0002_add_image_position_bucket.sql`
 - `docs/privacy-analytics.md`
 
 ## Validation
