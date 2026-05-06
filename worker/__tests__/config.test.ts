@@ -2,6 +2,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 type WranglerConfig = {
+  assets?: {
+    binding?: string;
+    run_worker_first?: boolean | string[];
+  };
   main?: string;
   d1_databases?: Array<{
     binding?: string;
@@ -27,6 +31,8 @@ describe('worker D1 wiring', () => {
     const config = readWranglerConfig();
 
     expect(config.main).toBe('worker/index.ts');
+    expect(config.assets?.binding).toBe('ASSETS');
+    expect(config.assets?.run_worker_first).toEqual(['/api/*']);
     expect(config.d1_databases).toEqual([
       {
         binding: 'DB',
